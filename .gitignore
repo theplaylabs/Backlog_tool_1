@@ -19,6 +19,6 @@ venv/
 # Backlog file
 backlog.csv
 
-# 
-rules/
-tasks/
+# Project-specific directories
+/rules/
+/tasks/
