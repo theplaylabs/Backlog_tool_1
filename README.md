@@ -45,7 +45,7 @@ See the [demo instructions](docs/demo.md) for recording a demonstration GIF.
 ## Usage
 ```powershell
 # Typical: microphone dictation piped in via wintools/mac tools
-Get-Content dictation.txt | bckl --verbose
+Get-Content dictation.txt | bckl
 
 # Safe dry-run – just show JSON
 bckl --dry-run < idea.txt
@@ -53,8 +53,29 @@ bckl --dry-run < idea.txt
 
 Flags:
 * `--dry-run` – validate via OpenAI but _do not_ touch `backlog.csv`.
-* `--verbose` – print the full description field after saving.
 * `--version` – display current app version.
+
+### Output Format
+
+When a dictation is processed, the output will include:
+1. A separator line
+2. The title and difficulty rating
+3. Another separator line
+4. The full description text
+
+### Customizing the Prompt
+
+The OpenAI prompt used to process dictations is stored in `prompt.txt` in the project root. You can edit this file to customize how dictations are interpreted without modifying code.
+
+### CSV File
+
+The tool automatically creates `backlog.csv` in the current directory if it doesn't exist. Each entry is stored in the following format:
+
+```
+title, difficulty, description, timestamp
+```
+
+Entries are prepended to the file, so the most recent items appear at the top.
 
 Logging goes to `%USERPROFILE%\.bckl\bckl.log` (rotating, 0.5 MB × 3).
 
