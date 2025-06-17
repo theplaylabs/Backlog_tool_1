@@ -90,6 +90,37 @@ def main(argv: list[str] | None = None) -> None:  # noqa: D401
         logger.info("Dry-run output for dictation: %s", dictation.strip())
         sys.exit(0)
 
+    # Interactive editing loop
+    while True:
+        # Display the current entry
+        print()  # Empty line for readability
+        print(f"Title: {data['title']}")
+        print(f"Difficulty: {data['difficulty']}")
+        print(f"Description: {data['description']}")
+        print()  # Empty line for readability
+        
+        # Prompt for edits (blank line to accept)
+        try:
+            print("> ", end="", flush=True)  # Show prompt for edit instructions
+            edit_instructions = sys.stdin.readline().strip()
+        except KeyboardInterrupt:
+            print("\nCancelled.", file=sys.stderr)
+            sys.exit(1)
+            
+        # If no edit instructions provided, proceed with saving
+        if not edit_instructions:
+            break
+            
+        # Process edit instructions through OpenAI
+        try:
+            data = openai_client.edit_backlog_entry(data, edit_instructions)
+            logger.info("Entry updated based on edit instructions")
+        except Exception as exc:
+            logger.error(f"Error processing edit instructions: {exc}")
+            print(f"ERROR: {exc}", file=sys.stderr)
+            print("Original entry preserved. You can try different edit instructions.")
+            # Continue the loop with the original data
+
     # Prepare CSV file
     csv_path = Path.cwd() / "backlog.csv"
     
@@ -119,14 +150,9 @@ def main(argv: list[str] | None = None) -> None:  # noqa: D401
         print(f"ERROR saving CSV: {exc}", file=sys.stderr)
         sys.exit(2)
 
-    # Display results to user
-    separator = "-" * 24
-    print(separator)
-    print(f"{data['title']} ({data['difficulty']}) saved")
-    print(separator)
+    # Display simple confirmation
+    print(f"Entry saved: {data['title']} (difficulty: {data['difficulty']})")
     
-    # Always print the full description
-    print(data["description"])
     
     # Log success
     logger.info("Entry saved: %s", data['title'])

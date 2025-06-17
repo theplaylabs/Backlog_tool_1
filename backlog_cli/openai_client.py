@@ -332,6 +332,117 @@ def call_openai(dictation: str, *, model: str | None = None) -> dict:
     raise RuntimeError("OpenAI call failed after retries")
 
 
+def edit_backlog_entry(original_entry: dict, edit_instructions: str, *, model: str | None = None) -> dict:
+    """Process edit instructions for a backlog entry.
+    
+    Takes an existing backlog entry and user-provided edit instructions,
+    then sends both to OpenAI to generate an updated entry that incorporates
+    the requested changes.
+    
+    Args:
+        original_entry: The original backlog entry dictionary
+        edit_instructions: User's instructions for editing the entry
+        model: Optional model override (defaults to config.model)
+        
+    Returns:
+        dict: Updated backlog entry incorporating the requested changes
+        
+    Raises:
+        ValueError: If edit instructions are empty or response validation fails
+        OpenAIError: If API communication fails after retries
+        json.JSONDecodeError: If response cannot be parsed as JSON after retries
+    """
+    if not edit_instructions.strip():
+        raise ValueError("Empty edit instructions provided")
+
+    # Import from config to avoid duplication
+    from . import config
+    model = model or config.load_config().model
+    
+    # Format the original entry for the prompt
+    original_entry_text = (
+        f"Title: {original_entry['title']}\n"
+        f"Difficulty: {original_entry['difficulty']}\n"
+        f"Description: {original_entry['description']}"
+    )
+    
+    # Create the prompt for editing
+    prompt = (
+        f"Here is the current backlog entry:\n\n"
+        f"{original_entry_text}\n\n"
+        f"Edit instructions: {edit_instructions}\n\n"
+        f"Please provide an updated entry that incorporates these changes. "
+        f"Return only valid JSON with the same schema (title, difficulty, description, timestamp)."
+    )
+    
+    logger = config.get_logger(__name__)
+    logger.debug(f"Sending edit request to OpenAI: {edit_instructions[:50]}...")
+    
+    # Make sure the system message is loaded before any attempts
+    _load_system_message()
+    
+    for attempt in range(1, _RETRY_ATTEMPTS + 2):
+        try:
+            logger.debug(f"Edit attempt {attempt}: Calling OpenAI API with model {model}")
+            response = _chat_create(
+                model=model,
+                temperature=0.3,
+                messages=[
+                    {"role": "system", "content": _SYSTEM_MESSAGE},
+                    {"role": "user", "content": prompt},
+                ],
+            )
+            content = response.choices[0].message.content  # type: ignore[index]
+            
+            # Log the raw response for debugging
+            logger.debug(f"Raw OpenAI edit response: {content}")
+            
+            # Clean up the content to handle potential formatting issues
+            content = content.strip()
+            
+            # Extract JSON using the same logic as in call_openai
+            if not content.startswith('{'):
+                json_start = content.find('{')
+                if json_start >= 0:
+                    logger.info(f"Found JSON starting at position {json_start}, extracting JSON part")
+                    content = content[json_start:]
+                    
+                    json_end = content.rfind('}')
+                    if json_end >= 0 and json_end < len(content) - 1:
+                        content = content[:json_end + 1]
+                else:
+                    if attempt < _RETRY_ATTEMPTS + 1:
+                        logger.warning("No JSON found in edit response, retrying with explicit JSON request")
+                        continue
+                    else:
+                        logger.error("No JSON object found in edit response after retries")
+                        raise json.JSONDecodeError("No JSON object found in edit response", content, 0)
+            
+            try:
+                data = json.loads(content)
+                _validate_schema(data)
+                
+                # Preserve the original timestamp unless explicitly changed
+                if 'timestamp' not in data and 'timestamp' in original_entry:
+                    data['timestamp'] = original_entry['timestamp']
+                    
+                return data
+            except json.JSONDecodeError as e:
+                logger.warning(f"JSON parsing error in edit response: {e}")
+                if attempt >= _RETRY_ATTEMPTS + 1:
+                    raise
+                # Otherwise, continue to retry
+                
+        except (OpenAIError, json.JSONDecodeError, ValueError) as exc:
+            logger.warning("OpenAI edit attempt %s failed: %s", attempt, exc)
+            if attempt > _RETRY_ATTEMPTS:
+                raise
+            time.sleep(2 ** attempt)  # simple exponential back-off
+            
+    # Should never reach here
+    raise RuntimeError("OpenAI edit call failed after retries")
+
+
 # ---------------------------------------------------------------------------
 # Internal utilities
 # ---------------------------------------------------------------------------
