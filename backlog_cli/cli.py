@@ -16,7 +16,7 @@ import sys
 from pathlib import Path
 
 from . import __version__ as _VERSION
-from . import csv_store, openai_client
+from . import csv_store, openai_client, config
 
 
 def _build_parser() -> argparse.ArgumentParser:
@@ -47,6 +47,9 @@ def main(argv: list[str] | None = None) -> None:  # noqa: D401
     """Program entry point."""
     argv = argv if argv is not None else sys.argv[1:]
     parser = _build_parser()
+
+    # Ensure logging configured early
+    logger = config.get_logger(__name__)
     args = parser.parse_args(argv)
 
     # Read single line dictation from stdin
@@ -67,6 +70,7 @@ def main(argv: list[str] | None = None) -> None:  # noqa: D401
 
     if args.dry_run:
         print(json.dumps(data, indent=2))
+        logger.info("Dry-run output for dictation: %s", dictation.strip())
         sys.exit(0)
 
     # Attempt to write to CSV – until csv_store is implemented, handle gracefully
@@ -84,6 +88,7 @@ def main(argv: list[str] | None = None) -> None:  # noqa: D401
         sys.exit(2)
 
     print(f"{data['title']} ({data['difficulty']}) saved")
+    logger.info("Entry saved: %s", data['title'])
     if args.verbose:
         print(data["description"])
 

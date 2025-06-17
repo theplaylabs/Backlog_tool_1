@@ -4,7 +4,7 @@
 - `backlog_cli/cli.py` – CLI entry point, reads dictation, flags, writes CSV (updated).
 - `backlog_cli/openai_client.py` – Encapsulates OpenAI prompt construction, request, JSON parsing, and in-memory cache (updated).
 - `backlog_cli/csv_store.py` – Handles prepend-row logic for `backlog.csv` (created).
-- `backlog_cli/config.py` – Dataclass for configuration (model, paths, logging) (created).
+- `backlog_cli/config.py` – Configuration + logging helpers (implemented).
 - `setup.cfg` – Packaging metadata and `console_scripts` entry for `bckl` (created).
 - `pyproject.toml` – Build system configuration for editable install (created).
 - `requirements.txt` – Runtime dependencies (`openai`, `python-dotenv`, test libs) (created).
@@ -14,7 +14,10 @@
 - `tests/test_openai_client.py` – Unit tests, mock OpenAI responses (created).
 - `tests/test_csv_store.py` – Unit tests for prepend logic & edge cases.
 - `tests/test_cli_dry_run.py` – Dry-run CLI test (created).
-- `tests/test_cli_integration.py` – Full CLI integration test (pending).
+- `tests/test_cli_integration.py` – Full CLI integration test (created).
+- `tests/test_csv_store_edge.py` – CSV edge-case tests (created).
+- `tests/test_config_logging.py` – Config & logging tests (created).
+- `pytest.ini` – defines test markers (`new`, `integration`).
 - `.github/workflows/ci.yml` – GitHub Actions workflow running pytest on Windows.
 
 ### Notes
@@ -45,7 +48,7 @@
   - [x] 2.7 Implement optional in-memory cache to avoid duplicate API calls in same session.
   - [x] 2.8 Provide CLI flag `--dry-run` to output would-be JSON without saving CSV (uses stubbed client).
 
-- [ ] **3.0 Build CLI entry point**
+- [x] **3.0 Build CLI entry point**
   - [x] 3.1 Implement `main()` in `cli.py`.
   - [x] 3.2 Read single line from `stdin`; exit with help on empty input.
   - [x] 3.3 Call `openai_client.call_openai` and capture structured data.
@@ -53,23 +56,23 @@
   - [x] 3.5 On failure → print `ERROR:` + message and raw dictation.
   - [x] 3.6 Add `--verbose`, `--version`, and `--dry-run` flags.
   - [x] 3.7 Ensure exit codes: 0 success, 1 user error, 2 API/network error.
-  - [ ] 3.8 Write integration test simulating full run with fixture dictation.
-  - [ ] 3.9 Integration test: run `bckl` from a nested sub-folder and verify it still writes CSV to that folder, not repo root.
+  - [x] 3.8 Write integration test simulating full run with fixture dictation.
+  - [x] 3.9 Integration test: run `bckl` from a nested sub-folder and verify it still writes CSV to that folder, not repo root.
 
-- [ ] **4.0 Implement CSV persistence**
-  - [ ] 4.1 Create `csv_store.py` with `prepend_row(path: Path, row: list[str])`.
-  - [ ] 4.2 Ensure atomic write: write to temp file then replace.
-  - [ ] 4.3 Quote fields via `csv.QUOTE_MINIMAL`; encode UTF-8.
-  - [ ] 4.4 Handle file-lock `PermissionError` gracefully with warning.
-  - [ ] 4.5 Unit tests: new file, existing file, file locked (mock), big file (>5k rows).
-  - [ ] 4.6 Ensure robust CSV quoting (commas, quotes, newlines in description) and add dedicated tests.
+- [x] **4.0 Implement CSV persistence**
+  - [x] 4.1 Create `csv_store.py` with `prepend_row(path: Path, row: list[str])`.
+  - [x] 4.2 Ensure atomic write: write to temp file then replace.
+  - [x] 4.3 Quote fields via `csv.QUOTE_MINIMAL`; encode UTF-8.
+  - [x] 4.4 Handle file-lock `PermissionError` gracefully with warning.
+  - [x] 4.5 Unit tests: new file, existing file, file locked (mock), big file (>5k rows).
+  - [x] 4.6 Ensure robust CSV quoting (commas, quotes, newlines in description) and add dedicated tests.
 
 - [ ] **5.0 Logging, configuration, and tests**
-  - [ ] 5.1 Implement `config.py` dataclass with defaults and env var overrides.
-  - [ ] 5.2 Configure `logging` to write rotating file `%USERPROFILE%\.bckl\bckl.log`.
-  - [ ] 5.3 Add pytest fixtures and helpers for temporary CSV directory.
-  - [ ] 5.4 Document usage and troubleshooting in `README.md`.
-  - [ ] 5.5 Set up GitHub Actions `ci.yml` running `pytest` on Windows-latest.
+  - [x] 5.1 Implement `config.py` dataclass with defaults and env var overrides.
+  - [x] 5.2 Configure `logging` to write rotating file `%USERPROFILE%\.bckl\bckl.log`.
+  - [x] 5.3 Add pytest fixtures and helpers for temporary CSV directory.
+  - [x] 5.4 Document usage and troubleshooting in `README.md`.
+  - [ ] 5.5 Set up GitHub Actions `ci.yml` running `pytest` on Windows-latest (run fast suite: `-m "not integration"`).
   - [ ] 5.6 Achieve ≥90% test coverage reported in CI.
   - [ ] 5.7 Support `.env` file loading via `python-dotenv` for `OPENAI_API_KEY`.
   - [ ] 5.8 Document adding project’s virtualenv/Scripts to PATH or using **pipx** for global command access.
