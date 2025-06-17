@@ -20,5 +20,5 @@ venv/
 backlog.csv
 
 # 
-/rules
-/tasks
+rules/
+tasks/
