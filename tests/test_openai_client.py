@@ -18,7 +18,7 @@ class DummyResponse:
 
 @pytest.fixture()
 def mock_chat(monkeypatch):
-    """Patch openai.ChatCompletion.create."""
+    """Patch internal oc._chat_create helper to return controlled data."""
 
     def _factory(content: str):
         def _create(**_kwargs):  # noqa: D401
@@ -28,7 +28,7 @@ def mock_chat(monkeypatch):
 
     def _setter(return_json: dict):
         json_text = json.dumps(return_json)
-        monkeypatch.setattr("openai.ChatCompletion.create", _factory(json_text))
+        monkeypatch.setattr(oc, "_chat_create", _factory(json_text), raising=True)
 
     return _setter
 

@@ -4,12 +4,25 @@ from __future__ import annotations
 import json
 import logging
 import os
+from dotenv import load_dotenv
+
+# Load environment variables from .env if present
+load_dotenv()
 import time
 from typing import Final
 
 import openai
 
 logger = logging.getLogger(__name__)
+
+# ---------------------------------------------------------------------------
+# Compatibility: handle openai>=1.0 new client interface
+# ---------------------------------------------------------------------------
+if hasattr(openai, "chat") and hasattr(openai.chat.completions, "create"):
+    _chat_create = openai.chat.completions.create  # type: ignore[attr-defined]
+else:  # Fallback to legacy path
+    _chat_create = openai.ChatCompletion.create  # type: ignore[attr-defined]
+
 
 # Ensure compatibility across openai package versions
 try:
@@ -74,7 +87,7 @@ def call_openai(dictation: str, *, model: str | None = None) -> dict:  # noqa: D
 
     for attempt in range(1, _RETRY_ATTEMPTS + 2):
         try:
-            response = openai.ChatCompletion.create(
+            response = _chat_create(
                 model=model,
                 temperature=0.3,
                 messages=[
