@@ -4,7 +4,7 @@
 
 _BCKL turns a voice-dictated idea into a structured backlog entry and
 appends it (atomically) to `backlog.csv` in the current folder._
-
+In a vibe coding environment, you can directly as the AI to select the next feature to work on (based on how complex a feature you want to work on)
 ---
 
 ## Installation
