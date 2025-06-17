@@ -17,7 +17,7 @@ from typing import Final
 
 __all__ = ["Config", "load_config", "setup_logging", "get_logger"]
 
-_DEFAULT_MODEL: Final = "gpt-3.5-turbo"
+_DEFAULT_MODEL: Final = "gpt-4o-mini"
 _LOG_FILE_NAME: Final = "bckl.log"
 _MAX_BYTES: Final = 512_000  # 0.5 MB per file
 _BACKUP_COUNT: Final = 3

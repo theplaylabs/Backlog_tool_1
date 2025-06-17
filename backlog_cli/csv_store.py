@@ -1,7 +1,7 @@
 """CSV storage utilities for backlog entries.
 
 The CSV has **no header** and each row is:
-ISO-8601 timestamp, title, difficulty (1-5), description
+title, difficulty (1-5), description, ISO-8601 timestamp
 """
 from __future__ import annotations
 

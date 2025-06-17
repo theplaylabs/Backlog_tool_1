@@ -1,5 +1,7 @@
 # BCKL – Backlog Dictation CLI
 
+[![CI Status](https://github.com/theplaylabs/Backlog_tool_1/actions/workflows/ci.yml/badge.svg)](https://github.com/theplaylabs/Backlog_tool_1/actions/workflows/ci.yml)
+
 _BCKL turns a voice-dictated idea into a structured backlog entry and
 appends it (atomically) to `backlog.csv` in the current folder._
 
@@ -26,11 +28,17 @@ pip install -e .[dev]   # editable + test deps
 | Variable | Purpose | Default |
 |----------|---------|---------|
 | `OPENAI_API_KEY` | API key for OpenAI | _required_ |
-| `BACKLOG_MODEL`  | Chat completion model | `gpt-3.5-turbo` |
+| `BACKLOG_MODEL`  | Chat completion model | `gpt-4o-mini` |
 | `BACKLOG_LOG_DIR`| Folder for logs | `%USERPROFILE%\.bckl` |
 | `BACKLOG_LOG_LEVEL` | Root log level | `INFO` |
 
 Place them in `.env` (auto-loaded) or in your shell profile.
+
+---
+
+## Demo
+
+See the [demo instructions](docs/demo.md) for recording a demonstration GIF.
 
 ---
 
@@ -81,6 +89,25 @@ integration  – slow end-to-end tests
 
 ---
 
-## Roadmap
-See `tasks/tasks-prd-backlog-cli.md` for remaining milestones (logging, CI,
-documentation, release pipeline).
+## Architecture
+
+See the [architecture diagram](docs/architecture.md) for component overview and data flow.
+
+---
+
+## Release Process
+
+To create a new release:
+
+```powershell
+# Build the package
+./scripts/build.ps1
+
+# Test installation in clean environment
+./scripts/test_install.ps1
+
+# Create release with version
+./scripts/release.ps1 -Version 0.1.0 -TestPyPI
+```
+
+See `tasks/tasks-prd-backlog-cli.md` for project history and completed milestones.

@@ -1,3 +1,42 @@
 [build-system]
 requires = ["setuptools>=61", "wheel"]
 build-backend = "setuptools.build_meta"
+
+[project]
+name = "backlog-cli"
+version = "0.1.0"
+description = "CLI tool for capturing backlog items from dictation"
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "MIT"}
+authors = [
+    {name = "Play Labs Team", email = "info@theplaylabs.com"}
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Topic :: Software Development :: Documentation",
+    "Topic :: Utilities"
+]
+dependencies = [
+    "openai==1.14.2",
+    "python-dotenv==1.0.1",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest==8.2.0",
+    "pytest-mock==3.12.0",
+    "build>=1.0.3",
+    "twine>=4.0.2",
+]
+
+[project.scripts]
+bckl = "backlog_cli.cli:main"
+
+[tool.setuptools]
+packages = ["backlog_cli"]

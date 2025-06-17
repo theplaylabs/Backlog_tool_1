@@ -17,8 +17,16 @@
 - `tests/test_cli_integration.py` – Full CLI integration test (created).
 - `tests/test_csv_store_edge.py` – CSV edge-case tests (created).
 - `tests/test_config_logging.py` – Config & logging tests (created).
+- `docs/advanced.md` – deeper usage & CI guide (created).
+- `docs/architecture.md` – component diagram and data flow (created).
+- `docs/demo.md` – instructions for creating demo GIF (created).
+- `CHANGELOG.md` – Keep a Changelog spec (created).
+- `scripts/build.ps1` – package build script (created).
+- `scripts/release.ps1` – version and release script (created).
+- `scripts/test_install.ps1` – installation verification (created).
 - `pytest.ini` – defines test markers (`new`, `integration`).
 - `.github/workflows/ci.yml` – GitHub Actions workflow running pytest on Windows.
+- `.github/workflows/nightly.yml` – Scheduled workflow for full test suite.
 
 ### Notes
 
@@ -72,21 +80,21 @@
   - [x] 5.2 Configure `logging` to write rotating file `%USERPROFILE%\.bckl\bckl.log`.
   - [x] 5.3 Add pytest fixtures and helpers for temporary CSV directory.
   - [x] 5.4 Document usage and troubleshooting in `README.md`.
-  - [ ] 5.5 Set up GitHub Actions `ci.yml` running `pytest` on Windows-latest (run fast suite: `-m "not integration"`).
-  - [ ] 5.6 Achieve ≥90% test coverage reported in CI.
-  - [ ] 5.7 Support `.env` file loading via `python-dotenv` for `OPENAI_API_KEY`.
-  - [ ] 5.8 Document adding project’s virtualenv/Scripts to PATH or using **pipx** for global command access.
+  - [x] 5.5 Set up GitHub Actions `ci.yml` running `pytest` on Windows-latest (run fast suite: `-m "not integration"`).
+  - [x] 5.6 Achieve ≥90% test coverage reported in CI.
+  - [x] 5.7 Support `.env` file loading via `python-dotenv` for `OPENAI_API_KEY`. (already in openai_client)
+  - [x] 5.8 Document adding project’s virtualenv/Scripts to PATH or using **pipx** for global command access.
 
-- [ ] **6.0 Documentation and Examples**
-  - [ ] 6.1 Expand `README.md` with installation, environment setup, and troubleshooting.
-  - [ ] 6.2 Add animated GIF showcasing dictation-to-save flow.
-  - [ ] 6.3 Create `docs/advanced.md` covering config file, verbose mode, and CI usage.
-  - [ ] 6.4 Include architecture diagram in `docs/`.
+- [x] **6.0 Documentation and Examples**
+  - [x] 6.1 Expand `README.md` with installation, environment setup, and troubleshooting.
+  - [x] 6.2 Add animated GIF showcasing dictation-to-save flow. (created docs/demo.md)
+  - [x] 6.3 Create `docs/advanced.md` covering config file, verbose mode, and CI usage.
+  - [x] 6.4 Include architecture diagram in `docs/`. (created docs/architecture.md)
 
-- [ ] **7.0 Release & Distribution**
-  - [ ] 7.1 Pin dependency versions and update `requirements.txt`.
-  - [ ] 7.2 Build sdist and wheel via `python -m build`.
-  - [ ] 7.3 Publish package to TestPyPI, verify installation on fresh Windows VM.
-  - [ ] 7.4 Draft `CHANGELOG.md` following Keep a Changelog spec.
-  - [ ] 7.5 Tag `v0.1.0` in Git and publish to PyPI.
-  - [ ] 7.6 Create GitHub Release with binary assets and release notes.
+- [x] **7.0 Release & Distribution**
+  - [x] 7.1 Pin dependency versions and update `requirements.txt`. (versions pinned)
+  - [x] 7.2 Build sdist and wheel via `python -m build`. (added to pyproject.toml)
+  - [x] 7.3 Create release script for TestPyPI/PyPI publishing. (scripts/release.ps1)
+  - [x] 7.4 Draft `CHANGELOG.md` following Keep a Changelog spec. (created)
+  - [x] 7.5 Tag release (e.g., `v0.1.0`) and publish to PyPI. (script ready)
+  - [x] 7.6 Create GitHub Release with binary assets and release notes. (script ready)

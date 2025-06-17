@@ -15,3 +15,6 @@ input/
 # Package manager artifacts
 node_modules/
 venv/
+
+# Backlog file
+backlog.csv

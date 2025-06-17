@@ -73,12 +73,23 @@ def main(argv: list[str] | None = None) -> None:  # noqa: D401
         logger.info("Dry-run output for dictation: %s", dictation.strip())
         sys.exit(0)
 
-    # Attempt to write to CSV – until csv_store is implemented, handle gracefully
+    # Attempt to write to CSV
     csv_path = Path.cwd() / "backlog.csv"
+    
+    # Create empty file if it doesn't exist
+    if not csv_path.exists():
+        logger.info("Creating new backlog.csv file")
+        try:
+            with csv_path.open("w", encoding="utf-8", newline="") as f:
+                pass  # Just create an empty file
+        except Exception as exc:
+            print(f"ERROR creating CSV file: {exc}", file=sys.stderr)
+            sys.exit(2)
+    
     try:
         csv_store.prepend_row(
             csv_path,
-            [data["timestamp"], data["title"], str(data["difficulty"]), data["description"]],
+            [data["title"], str(data["difficulty"]), data["description"], data["timestamp"]],
         )
     except NotImplementedError:
         # Development placeholder
@@ -87,10 +98,16 @@ def main(argv: list[str] | None = None) -> None:  # noqa: D401
         print(f"ERROR saving CSV: {exc}", file=sys.stderr)
         sys.exit(2)
 
+    # Print separator line before output
+    separator = "-" * 24
+    print(separator)
     print(f"{data['title']} ({data['difficulty']}) saved")
+    print(separator)
+    
+    # Always print the full description
+    print(data["description"])
+    
     logger.info("Entry saved: %s", data['title'])
-    if args.verbose:
-        print(data["description"])
 
     sys.exit(0)
 

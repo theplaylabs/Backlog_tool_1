@@ -10,7 +10,7 @@ import backlog_cli.config as cfg
 def test_load_defaults(monkeypatch, tmp_path):
     monkeypatch.setenv("USERPROFILE", str(tmp_path))
     c = cfg.load_config()
-    assert c.model == "gpt-3.5-turbo"
+    assert c.model == "gpt-4o-mini"
     assert c.log_dir == tmp_path / ".bckl"
 
 

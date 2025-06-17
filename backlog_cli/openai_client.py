@@ -4,6 +4,7 @@ from __future__ import annotations
 import json
 import logging
 import os
+from pathlib import Path
 from dotenv import load_dotenv
 
 # Load environment variables from .env if present
@@ -31,27 +32,48 @@ except AttributeError:  # pragma: no cover – fallback for older versions
     from openai.error import OpenAIError  # type: ignore
 
 # ---------------------------------------------------------------------------
-# Prompt pieces
+# Prompt loading
 # ---------------------------------------------------------------------------
-_TITLE_GOOD_EXAMPLES: Final[str] = (
-    "Add OAuth login flow; Refactor payment adapter module; Improve CSV import performance"
-)
+def _load_prompt() -> str:
+    """Load the system prompt from prompt.txt in the project root.
+    
+    Falls back to the embedded prompt if the file doesn't exist.
+    """
+    # Try to find prompt.txt in several locations
+    possible_paths = [
+        Path(os.getcwd()) / "prompt.txt",  # Current directory
+        Path(__file__).parent.parent / "prompt.txt",  # Project root
+    ]
+    
+    for path in possible_paths:
+        if path.exists():
+            try:
+                with path.open("r", encoding="utf-8") as f:
+                    return f.read().strip()
+            except Exception as e:
+                logger.warning(f"Failed to read prompt file: {e}")
+                break
+    
+    # Fallback to embedded prompt
+    _TITLE_GOOD_EXAMPLES = "Add OAuth login flow; Refactor payment adapter module; Improve CSV import performance"
+    _RUBRIC = (
+        "1 = Tiny tweak (\u226430 min); 2 = Small feature (\u22642 h); 3 = Medium feature (\u22641 day); "
+        "4 = Large feature (1-3 days); 5 = Complex new module (>3 days)"
+    )
+    
+    return (
+        "You are a senior developer assisting in backlog grooming. "
+        "Given a raw dictation line, respond with **ONLY** valid JSON matching this schema:\n"
+        "{\n  \"title\": str,  # 5-6 word git-style imperative\n  \"difficulty\": int,  # 1-5 per rubric below\n  \"description\": str,  # cleaned full text\n  \"timestamp\": str  # ISO-8601 in UTC\n}\n\n"
+        "Rules:\n"
+        "- Use these good title examples as style reference: "
+        f"{_TITLE_GOOD_EXAMPLES}.\n"
+        "- Difficulty rubric: " + _RUBRIC + "\n"
+        "- Do not add fields. Reply with JSON only."
+    )
 
-_RUBRIC: Final[str] = (
-    "1 = Tiny tweak (\u226430 min); 2 = Small feature (\u22642 h); 3 = Medium feature (\u22641 day); "
-    "4 = Large feature (1-3 days); 5 = Complex new module (>3 days)"
-)
-
-_SYSTEM_MESSAGE: Final[str] = (
-    "You are a senior developer assisting in backlog grooming. "
-    "Given a raw dictation line, respond with **ONLY** valid JSON matching this schema:\n"
-    "{\n  \"title\": str,  # 5-6 word git-style imperative\n  \"difficulty\": int,  # 1-5 per rubric below\n  \"description\": str,  # cleaned full text\n  \"timestamp\": str  # ISO-8601 in UTC\n}\n\n"
-    "Rules:\n"
-    "- Use these good title examples as style reference: "
-    f"{_TITLE_GOOD_EXAMPLES}.\n"
-    "- Difficulty rubric: " + _RUBRIC + "\n"
-    "- Do not add fields. Reply with JSON only."
-)
+# Load the prompt once at module import time
+_SYSTEM_MESSAGE: Final[str] = _load_prompt()
 
 MODEL_DEFAULT: Final[str] = os.getenv("BACKLOG_MODEL", "gpt-3.5-turbo")
 _RETRY_ATTEMPTS: Final[int] = 2
