@@ -1,0 +1,17 @@
+# Environment variables
+.env
+
+# Python
+__pycache__/
+*.pyc
+
+# Logs and input data
+logs/
+input/
+
+# Editors / IDE
+.vscode/
+
+# Package manager artifacts
+node_modules/
+venv/
