@@ -18,3 +18,7 @@ venv/
 
 # Backlog file
 backlog.csv
+
+# 
+/rules
+/tasks

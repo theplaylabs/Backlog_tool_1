@@ -37,7 +37,7 @@
 
 ## Tasks
 
-- [ ] **1.0 Scaffold project and packaging**
+- [x] **1.0 Scaffold project and packaging**
   - [x] 1.1 Create directory structure `backlog_cli/` and `tests/`.
   - [x] 1.2 Add `__init__.py` and placeholder modules.
   - [x] 1.3 Write `setup.cfg` with metadata, dependencies, and `console_scripts = bckl = backlog_cli.cli:main`.
@@ -45,7 +45,7 @@
   - [x] 1.5 Verify local editable install `pip install -e .` places `bckl` on PATH (Windows PowerShell).
   - [ ] 1.6 Test global install via **pipx** and confirm `bckl` works from any directory.
 
-- [ ] **2.0 Implement OpenAI client**
+- [x] **2.0 Implement OpenAI client**
   - [x] 2.1 Create `openai_client.py` with `call_openai(dictation: str) -> dict`.
   - [x] 2.1.1 Add helper `sanitize_dictation(text: str) -> str` (trim whitespace, collapse spaces).
   - [x] 2.2 Embed system prompt containing title examples and difficulty rubric.
@@ -75,7 +75,7 @@
   - [x] 4.5 Unit tests: new file, existing file, file locked (mock), big file (>5k rows).
   - [x] 4.6 Ensure robust CSV quoting (commas, quotes, newlines in description) and add dedicated tests.
 
-- [ ] **5.0 Logging, configuration, and tests**
+- [x] **5.0 Logging, configuration, and tests**
   - [x] 5.1 Implement `config.py` dataclass with defaults and env var overrides.
   - [x] 5.2 Configure `logging` to write rotating file `%USERPROFILE%\.bckl\bckl.log`.
   - [x] 5.3 Add pytest fixtures and helpers for temporary CSV directory.
