@@ -1,2 +1,0 @@
-backlog_cli
-tests

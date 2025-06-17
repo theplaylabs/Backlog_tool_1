@@ -1,24 +1,35 @@
-# Environment variables
+# Environment variables and local config
 .env
+*.env
 
-# Python
+# Python cache and build artifacts
 __pycache__/
 *.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+*.egg-info/
+build/
+dist/
 
-# Logs and input data
+# User data
 logs/
 input/
+backlog.csv
 
 # Editors / IDE
 .vscode/
+.idea/
+*.swp
+*.swo
 
-# Package manager artifacts
-node_modules/
+# Virtual environments
 venv/
-
-# Backlog file
-backlog.csv
+.venv/
+env/
+node_modules/
 
 # Project-specific directories
 /rules/
 /tasks/
+/test/  # Redundant test directory
