@@ -26,16 +26,22 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 # Compatibility: handle openai>=1.0 new client interface
 # ---------------------------------------------------------------------------
+
+# Determine the appropriate OpenAI client interface based on version
 if hasattr(openai, "chat") and hasattr(openai.chat.completions, "create"):
+    # Modern OpenAI client (>=1.0.0)
     _chat_create = openai.chat.completions.create  # type: ignore[attr-defined]
-else:  # Fallback to legacy path
+else:  
+    # Legacy OpenAI client (<1.0.0)
     _chat_create = openai.ChatCompletion.create  # type: ignore[attr-defined]
 
 
-# Ensure compatibility across openai package versions
+# Ensure compatibility across openai package versions for error handling
 try:
-    OpenAIError = openai.OpenAIError  # openai>=1.0.0
+    # Modern OpenAI client (>=1.0.0)
+    OpenAIError = openai.OpenAIError
 except AttributeError:  # pragma: no cover – fallback for older versions
+    # Legacy OpenAI client (<1.0.0)
     from openai.error import OpenAIError  # type: ignore
 
 # ---------------------------------------------------------------------------
@@ -65,9 +71,17 @@ def _load_system_message() -> None:
 def _get_readme_context(max_chars: int = 200) -> tuple[str, bool]:
     """Get meaningful content from the README.md file for context.
     
-    Returns a tuple of (context_string, success_flag).
-    The context_string will be empty if the file doesn't exist or can't be read.
-    The success_flag indicates whether the README was successfully read.
+    Extracts the project title and description from the README.md file to provide
+    context to the AI about the current project. This helps generate more relevant
+    and accurate backlog entries.
+    
+    Args:
+        max_chars: Maximum number of characters to include in the context
+        
+    Returns:
+        tuple[str, bool]: A tuple containing:
+            - context_string: Extracted content from README (empty if not found)
+            - success_flag: True if README was successfully read, False otherwise
     """
     # Try to find README.md in several locations
     readme_paths = [
@@ -122,8 +136,12 @@ def _get_readme_context(max_chars: int = 200) -> tuple[str, bool]:
 def _load_prompt() -> str:
     """Load the system prompt from prompt.txt in the project root.
     
-    Falls back to the embedded prompt if the file doesn't exist.
-    Includes README context for better AI understanding.
+    Attempts to load the prompt from prompt.txt in the project root directory.
+    Falls back to the embedded prompt if the file doesn't exist or can't be read.
+    Includes README context for better AI understanding of the project.
+    
+    Returns:
+        str: The complete system prompt with project context included
     """
     # Default embedded prompt if file not found
     _TITLE_GOOD_EXAMPLES = "Add OAuth login flow; Refactor payment adapter module; Improve CSV import performance"
@@ -186,9 +204,17 @@ _CACHE: dict[tuple[str, str], dict] = {}
 # Public helpers
 # ---------------------------------------------------------------------------
 def sanitize_dictation(text: str) -> str:
-    """Trim and normalise whitespace in the dictation string.
+    """Trim and normalize whitespace in the dictation string.
     
-    Also handles special cases where the input might be misinterpreted.
+    Handles special cases where the input might be misinterpreted as meta-instructions
+    rather than actual backlog items. Detects potential meta-instructions and prefixes
+    them with "Backlog item:" to ensure they're processed correctly.
+    
+    Args:
+        text: The raw dictation text from user input
+        
+    Returns:
+        str: Sanitized dictation text ready for processing
     """
     text = text.strip()
     
@@ -208,7 +234,24 @@ def sanitize_dictation(text: str) -> str:
 def call_openai(dictation: str, *, model: str | None = None) -> dict: 
     """Call OpenAI chat completion and return parsed JSON dict.
 
-    Retries up to 2 times on API error or malformed JSON.
+    Sends the dictation to OpenAI's API and processes the response into a structured
+    backlog entry. Handles various edge cases including non-JSON responses and
+    extracts JSON from text responses when needed.
+    
+    Args:
+        dictation: The user's dictation text to process
+        model: Optional model override (defaults to config.model)
+        
+    Returns:
+        dict: Parsed JSON response with backlog entry fields
+        
+    Raises:
+        ValueError: If dictation is empty or response validation fails
+        OpenAIError: If API communication fails after retries
+        json.JSONDecodeError: If response cannot be parsed as JSON after retries
+        
+    Note:
+        Retries up to 2 times on API error or malformed JSON.
     """
     if not dictation.strip():
         raise ValueError("Empty dictation provided")
