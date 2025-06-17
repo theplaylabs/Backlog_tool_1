@@ -8,6 +8,13 @@ import pytest
 from backlog_cli.openai_client import _get_readme_context, _load_prompt
 
 
+# Helper class for mocking OpenAI responses
+class MockChoice:
+    """Mock class for OpenAI API response choices."""
+    def __init__(self, content):
+        self.message = mock.MagicMock(content=content)
+
+
 def test_get_readme_context():
     """Test that README context is correctly extracted."""
     test_content = "# Test README\n\nThis is a test README file with more than 200 characters. " + "x" * 200
@@ -56,9 +63,6 @@ def test_json_extraction_from_response():
     mock_response_text = "I'm thinking about your request... Here's the result:\n{\"title\": \"Add README context extraction\", \"difficulty\": 2, \"description\": \"Add context from README\", \"timestamp\": \"2025-06-17T14:30:00Z\"}"
     
     # Create a mock response object with the content
-    class MockChoice:
-        def __init__(self, content):
-            self.message = mock.MagicMock(content=content)
     
     mock_response = mock.MagicMock()
     mock_response.choices = [MockChoice(mock_response_text)]
@@ -83,10 +87,6 @@ def test_json_extraction_with_text_after():
     
     # Mock the OpenAI response to include text after the JSON
     mock_response_text = "{\"title\": \"Add README context extraction\", \"difficulty\": 2, \"description\": \"Add context from README\", \"timestamp\": \"2025-06-17T14:30:00Z\"}\n\nI hope this helps with your task!"
-    
-    class MockChoice:
-        def __init__(self, content):
-            self.message = mock.MagicMock(content=content)
     
     mock_response = mock.MagicMock()
     mock_response.choices = [MockChoice(mock_response_text)]

@@ -1,4 +1,11 @@
-"""Utilities for calling OpenAI and converting raw dictation to structured backlog JSON."""
+"""Utilities for calling OpenAI and converting raw dictation to structured backlog JSON.
+
+This module handles:
+- Loading system prompts and project context
+- Communicating with the OpenAI API
+- Processing and validating responses
+- Caching to avoid duplicate API calls
+"""
 from __future__ import annotations
 
 import json
@@ -38,16 +45,13 @@ except AttributeError:  # pragma: no cover – fallback for older versions
 # Cache to avoid duplicate API calls in same session
 _CACHE: dict[tuple[str, str], dict] = {}
 
-# Default model
-MODEL_DEFAULT = os.environ.get("BACKLOG_MODEL", "gpt-4o-mini")
-
-# Retry configuration
-_RETRY_ATTEMPTS = 2
-
 # System message placeholder - will be loaded on first use
 _SYSTEM_MESSAGE = ""
 
-def _load_system_message():
+# Constants
+_RETRY_ATTEMPTS: Final[int] = 2
+
+def _load_system_message() -> None:
     """Load or reload the system message.
     
     This ensures we always have the latest prompt content.
@@ -175,18 +179,12 @@ def _load_prompt() -> str:
     rest_of_content = '\n'.join(lines[1:]) if len(lines) > 1 else ""
     return f"{first_line}\n\n{context_section}{rest_of_content}"
 
-# Initialize system message on first use via _load_system_message()
-
-MODEL_DEFAULT: Final[str] = os.getenv("BACKLOG_MODEL", "gpt-4o-mini")
-_RETRY_ATTEMPTS: Final[int] = 2
-
 # Simple in-memory cache mapping (model, prompt) -> parsed JSON response
 _CACHE: dict[tuple[str, str], dict] = {}
 
 # ---------------------------------------------------------------------------
 # Public helpers
 # ---------------------------------------------------------------------------
-
 def sanitize_dictation(text: str) -> str:
     """Trim and normalise whitespace in the dictation string.
     
@@ -207,7 +205,7 @@ def sanitize_dictation(text: str) -> str:
     return " ".join(text.split())
 
 
-def call_openai(dictation: str, *, model: str | None = None) -> dict:  # noqa: D401
+def call_openai(dictation: str, *, model: str | None = None) -> dict: 
     """Call OpenAI chat completion and return parsed JSON dict.
 
     Retries up to 2 times on API error or malformed JSON.
@@ -215,20 +213,24 @@ def call_openai(dictation: str, *, model: str | None = None) -> dict:  # noqa: D
     if not dictation.strip():
         raise ValueError("Empty dictation provided")
 
-    model = model or MODEL_DEFAULT
+    # Import from config to avoid duplication
+    from . import config
+    model = model or config.load_config().model
 
     prompt_user = sanitize_dictation(dictation)
 
     # Quick in-memory cache to avoid duplicate API calls in same session
     _cache_key = (model, prompt_user)
     if _cache_key in _CACHE:
+        logger.debug(f"Using cached response for {prompt_user[:30]}...")
         return _CACHE[_cache_key]
 
+    # Make sure the system message is loaded before any attempts (in case it was updated)
+    _load_system_message()
+    
     for attempt in range(1, _RETRY_ATTEMPTS + 2):
         try:
-            # Make sure the system message is loaded each time (in case it was updated)
-            _load_system_message()
-            
+            logger.debug(f"Attempt {attempt}: Calling OpenAI API with model {model}")
             response = _chat_create(
                 model=model,
                 temperature=0.3,
@@ -292,7 +294,17 @@ def call_openai(dictation: str, *, model: str | None = None) -> dict:  # noqa: D
 # ---------------------------------------------------------------------------
 
 def _validate_schema(data: dict) -> None:
-    """Basic schema validation for OpenAI response."""
+    """Basic schema validation for OpenAI response.
+    
+    Validates that the response contains all required fields with correct types
+    and that the difficulty is within the valid range (1-5).
+    
+    Args:
+        data: The parsed JSON response from OpenAI
+        
+    Raises:
+        ValueError: If any validation check fails
+    """
     required = {"title": str, "difficulty": int, "description": str, "timestamp": str}
     for key, typ in required.items():
         if key not in data:

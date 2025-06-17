@@ -5,7 +5,10 @@ prepends the structured entry to `backlog.csv` in the current directory.  A
 `--dry-run` flag lets you preview the JSON without touching the CSV (handy for
 unit tests).
 
-Exit codes: 0 success, 1 user error, 2 API/network error.
+Exit codes:
+    0: Success
+    1: User error (invalid input, keyboard interrupt)
+    2: API/network/file error
 """
 
 from __future__ import annotations
@@ -20,6 +23,11 @@ from . import csv_store, openai_client, config
 
 
 def _build_parser() -> argparse.ArgumentParser:
+    """Build the command-line argument parser.
+    
+    Returns:
+        argparse.ArgumentParser: Configured argument parser
+    """
     p = argparse.ArgumentParser(
         prog="bckl",
         description="Dictation-driven backlog entry tool",
@@ -44,7 +52,12 @@ def _build_parser() -> argparse.ArgumentParser:
 
 
 def main(argv: list[str] | None = None) -> None:  # noqa: D401
-    """Program entry point."""
+    """Program entry point.
+    
+    Args:
+        argv: Command-line arguments (defaults to sys.argv[1:])
+    """
+    # Process command-line arguments
     argv = argv if argv is not None else sys.argv[1:]
     parser = _build_parser()
 
@@ -59,21 +72,25 @@ def main(argv: list[str] | None = None) -> None:  # noqa: D401
         print("\nCancelled.", file=sys.stderr)
         sys.exit(1)
 
+    # Validate input
     if not dictation.strip():
         parser.error("No input received – please dictate or type a line and press Enter.")
 
+    # Process dictation through OpenAI
     try:
         data = openai_client.call_openai(dictation)
     except Exception as exc:  # broad: translate to exit code 2
+        logger.error(f"OpenAI API error: {exc}")
         print(f"ERROR: {exc}", file=sys.stderr)
         sys.exit(2)
 
+    # Handle dry run mode
     if args.dry_run:
         print(json.dumps(data, indent=2))
         logger.info("Dry-run output for dictation: %s", dictation.strip())
         sys.exit(0)
 
-    # Attempt to write to CSV
+    # Prepare CSV file
     csv_path = Path.cwd() / "backlog.csv"
     
     # Create empty file if it doesn't exist
@@ -83,9 +100,11 @@ def main(argv: list[str] | None = None) -> None:  # noqa: D401
             with csv_path.open("w", encoding="utf-8", newline="") as f:
                 pass  # Just create an empty file
         except Exception as exc:
+            logger.error(f"Failed to create CSV file: {exc}")
             print(f"ERROR creating CSV file: {exc}", file=sys.stderr)
             sys.exit(2)
     
+    # Write data to CSV
     try:
         csv_store.prepend_row(
             csv_path,
@@ -93,12 +112,14 @@ def main(argv: list[str] | None = None) -> None:  # noqa: D401
         )
     except NotImplementedError:
         # Development placeholder
+        logger.warning("CSV persistence not implemented")
         print("(CSV persistence not yet implemented – dry run implied)")
     except Exception as exc:  # pragma: no cover
+        logger.error(f"Failed to save to CSV: {exc}")
         print(f"ERROR saving CSV: {exc}", file=sys.stderr)
         sys.exit(2)
 
-    # Print separator line before output
+    # Display results to user
     separator = "-" * 24
     print(separator)
     print(f"{data['title']} ({data['difficulty']}) saved")
@@ -107,6 +128,7 @@ def main(argv: list[str] | None = None) -> None:  # noqa: D401
     # Always print the full description
     print(data["description"])
     
+    # Log success
     logger.info("Entry saved: %s", data['title'])
 
     sys.exit(0)

@@ -32,4 +32,3 @@ node_modules/
 # Project-specific directories
 /rules/
 /tasks/
-/test/  # Redundant test directory
